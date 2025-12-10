@@ -1,4 +1,4 @@
-namespace WebAPI.Infrastructure.Interfaces
+namespace WebAPI.Domain.Interfaces
 {
     public interface IRepository<T> : IDisposable where T : class
     {

@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using WebAPI.Infrastructure.Interfaces;
+using WebAPI.Domain.Interfaces;
+using WebAPI.Infrastructure.Data;
 
-namespace WebAPI.Infrastructure.Services
+namespace WebAPI.Infrastructure.Repositories
 {
     public class Repository<T> : IRepository<T> where T : class
     {
@@ -30,6 +31,7 @@ namespace WebAPI.Infrastructure.Services
         public async Task<T> AddAsync(T entity)
         {
             await EntitySet.AddAsync(entity);
+            await _context.SaveChangesAsync();
             return entity;
         }
 
@@ -45,6 +47,7 @@ namespace WebAPI.Infrastructure.Services
             
             if (entity != null){
                 EntitySet.Remove(entity);
+                await _context.SaveChangesAsync();
             }
 
             return entity;

@@ -2,14 +2,14 @@ using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using WebAPI.Domain.Entities;
 
-namespace WebAPI.Infrastructure
+namespace WebAPI.Infrastructure.Data
 {
     public class DatabaseDBContext : DbContext
     {
         private readonly string _connectionString;
         public DatabaseDBContext(IConfiguration configuration)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection") ?? _connectionString;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
