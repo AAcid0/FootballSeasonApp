@@ -5,9 +5,9 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/WebAPI/bin/Debug/net8.0/WebAPI.dll",
+      "program": "${workspaceFolder}/WebClient/bin/Debug/net8.0/WebClient.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/WebAPI",
+      "cwd": "${workspaceFolder}/WebClient",
       "stopAtEntry": false,
       "serverReadyAction": {
         "action": "openExternally",
@@ -17,7 +17,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "sourceFileMap": {
-        "/Views": "${workspaceFolder}/WebAPI/Views"
+        "/Views": "${workspaceFolder}/WebClient/Views"
       }
     }
   ]
