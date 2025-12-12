@@ -44,15 +44,29 @@ Since the project uses SQLite, no external database server installation is requi
     git clone <REPOSITORY_URL>
     ```
 
-2.  **Restore dependencies and database:**
+2.  **Restore dependencies and tools:**
     The application uses *Entity Framework Core* with *SQLite*. Upon the first run, migrations should apply automatically. If not, you can force the update:
+    ```bash
+    dotnet restore
+    dotnet tool install --global dotnet-ef
+    ```
+
+3.  **Database Setup**
+    The application uses *Entity Framework Core*. You must generate the local .db file before using the app.
     ```bash
     dotnet ef database update
     ```
 
-3.  **Run the application:**
+4.  **Run the application:**
+    Terminal 1
     ```bash
+    cd WebAPI
     dotnet run
+    ```
+    Terminal 2
+    ```bash
+    cd WebAPP
+    dotnet watch run
     ```
 
 4.  Open your browser at the indicated address (usually `https://localhost:xxxx`).
