@@ -3,6 +3,7 @@
 @using WebApp.Services.Interfaces
 @using WebApp.Models
 @inject ITeamService TeamService
+@inject IPlayerService PlayerService
 
 <div class="container mt-4">
     <div class="row mb-4">
@@ -10,146 +11,101 @@
             <TeamSelector 
                 teamsList="@teams" 
                 OnTeamIdSelected="UpdateSelection" 
-                OnCreateRequest="ShowCreateModal" />
+                OnCreateRequest="ShowTeamCreateModal" />
         </div>
         <div class="col-6">
             <div class="row">
                 <TeamDetailsCard
                     selectedTeam="@team"
-                    OnEditRequest="ShowUpdateModal" />
+                    OnEditRequest="ShowTeamUpdateModal" />
             </div>
             <div class="row mt-3">
                 <h3>Información de jugadores</h3>
-
+                <PlayerListCard
+                    PlayersList="@players"
+                    SelectedIdPlayer="UpdatePlayerSelection"
+                    OnAddPlayerRequest="ShowPlayerCreateModal" />
             </div>
         </div>
     </div>
-    <div class="row">
-        <h3>Estadísticas Temporada 2025</h3>
-    </div>
-    <div class="row">
-        <div class="col-6">
-            Jugadores con la letra "A" en su nombre: 0
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped table-hover text-center align-middle">
-                    <thead>
-                        <tr>
-                            <th>FUTBOLISTA</th>
-                            <th>REPETICIONES "A"</th>
-                            <th>NÚMERO DE PALABRAS</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>0</td>
-                            <td>0</td>
-                            <td>0</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="col-6">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped table-hover text-center align-middle">
-                    <thead>
-                        <tr>
-                            <th>CÓDIGO EQUIPO</th>
-                            <th>NOMBRE EQUIPO</th>
-                            <th>AÑO FUNDACIÓN</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>0</td>
-                            <td>0</td>
-                            <td>0</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-6">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped table-hover text-center align-middle">
-                    <thead>
-                        <tr>
-                            <th>EQUIPO</th>
-                            <th>JUGADOR</th>
-                            <th>GOLES</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>0</td>
-                            <td>0</td>
-                            <td>0</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="col-6">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped table-hover text-center align-middle">
-                    <thead>
-                        <tr>
-                            <th>EQUIPO</th>
-                            <th>ARQUERO</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>0</td>
-                            <td>0</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="row mb-4">
+        <StatisticsViewer
+            OriginalPlayersList="@allplayers"
+            OriginalTeamsList="@teams" />
     </div>
 </div>
 <TeamFormModal 
-    IsVisible="@showModal" 
-    TeamToEdit="@teamToEdit"
-    OnClose="CloseModal" 
-    OnSave="GuardarDatos" />
+    isVisible="@showModal" 
+    teamToEdit="@teamToEdit"
+    onClose="CloseModal" 
+    OnSave="SaveTeamChanges" />
+
+<PlayerFormModal
+    TeamsList="@teams"
+    isVisible="@showPlayerModal"
+    playerToEdit="@playerToEdit"
+    onClose="ClosePlayerModal"
+    onSave="SavePlayerChanges" />    
 
 @code {
     private List<Team>? teams;
     private Team? team;
     private bool showModal = false;
+    private bool showPlayerModal = false;
     private Team? teamToEdit;
+    private Player? playerToEdit;
+    private Player? player;
+    private List<Player>? players;
+    private List<Player>? allplayers;
 
     protected override async Task OnInitializedAsync()
     {
         await Task.Delay(500);
 
-        await CargarDatos();
+        await LoadData();
     }
 
-    private async Task CargarDatos()
+    private async Task LoadData()
     {
         teams = (await TeamService.GetAllTeamsAsync()).ToList();
+        allplayers = (await PlayerService.GetAllPlayersAsync()).ToList();
     }
 
-    private void UpdateSelection(int teamId)
+    private async Task UpdateSelection(int teamId)
     {
         team = teams?.FirstOrDefault(t => t.Id == teamId);
+        players = (await PlayerService.GetAllPlayersByTeam(teamId)).ToList();
     }
 
-    private void ShowCreateModal()
+    private void UpdatePlayerSelection(int playerId)
+    {
+        player = players?.FirstOrDefault(t => t.Id == playerId);
+        ShowPlayerUpdateModal();
+    }
+
+    private void ShowTeamCreateModal()
     {
         teamToEdit = null;
         showModal = true;
     }
 
-    private void ShowUpdateModal()
+    private void ShowTeamUpdateModal()
     {
         teamToEdit = team;
         showModal = true;
+    }
+
+        private void ShowPlayerCreateModal()
+    {
+        playerToEdit = new Player(){ TeamId = team?.Id ?? 0 };
+        showPlayerModal = true;
+    }
+
+    private void ShowPlayerUpdateModal()
+    {
+        playerToEdit = player;
+        playerToEdit.TeamId = team?.Id ?? 0;
+        showPlayerModal = true;
     }
 
     private void CloseModal()
@@ -157,23 +113,43 @@
         showModal = false;
     }
 
-    private async Task GuardarDatos(Team equipoDelFormulario)
+    private void ClosePlayerModal()
     {
-        if (equipoDelFormulario.Id == 0)
+        showPlayerModal = false;
+    }
+
+    private async Task SaveTeamChanges(Team teamForm)
+    {
+        if (teamForm.Id == 0)
         {
-            // ES CREAR
-            // await TeamService.CreateAsync(equipoDelFormulario); (Implementa esto en tu servicio)
-            Console.WriteLine("Creando equipo: " + equipoDelFormulario.Name);
+            await TeamService.CreateTeamAsync(teamForm);
         }
         else
         {
-            // ES EDITAR
-            // await TeamService.UpdateAsync(equipoDelFormulario);
-            Console.WriteLine("Editando equipo: " + equipoDelFormulario.Name);
+            await TeamService.UpdateTeamAsync(teamForm);
         }
 
-        // Recargamos lista y cerramos
-        await CargarDatos(); 
+        await LoadData(); 
         showModal = false;
+    }
+
+    private async Task SavePlayerChanges(Player playerForm)
+    {
+        if (playerForm.Id == 0)
+        {
+            await PlayerService.CreatePlayerAsync(playerForm);
+        }
+        else
+        {
+            await PlayerService.UpdatePlayerAsync(playerForm);
+        }
+
+        if (team != null)
+        {
+            players = (await PlayerService.GetAllPlayersByTeam(team.Id)).ToList();
+        }
+
+        await LoadData(); 
+        showPlayerModal = false;
     }
 }

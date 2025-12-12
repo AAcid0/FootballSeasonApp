@@ -1,0 +1,180 @@
+@using WebApp.Models
+
+@if (isVisible)
+{
+    <div class="modal-backdrop fade show"></div>
+
+    <div class="modal fade show d-block" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content border-0 shadow-lg">
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi @(IsEditMode ? "bi-pencil-square" : "bi-plus-circle") me-2"></i>
+                        @(IsEditMode ? "Editar Jugador" : "Registrar Nuevo Jugador")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
+                </div>
+
+                <div class="modal-body p-4">
+                    <EditForm Model="playerModel" OnValidSubmit="SaveChanges">
+                        <DataAnnotationsValidator />
+
+                        <ValidationSummary class="alert alert-danger mb-3" />
+
+                        <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">
+                                    <i class="bi bi-person-vcard"></i> Identificación
+                                </label>
+                                <InputNumber class="form-control" @bind-Value="playerModel.DocumentNumber"
+                                    placeholder="Ej: 123456" />
+                                <ValidationMessage For="@(() => playerModel.DocumentNumber)" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">
+                                    <i class="bi bi-person-video"></i> Nombre Completo
+                                </label>
+                                <InputText class="form-control" @bind-Value="playerModel.Name" />
+                                <ValidationMessage For="@(() => playerModel.Name)" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">
+                                    <i class="bi bi-shield-shaded me-1"></i> Equipo
+                                </label>
+
+                                <input type="text" class="form-control bg-light"
+                                    value="@(TeamsList?.FirstOrDefault(t => t.Id == playerModel.TeamId)?.Name ?? "Sin Asignar")"
+                                    disabled readonly />
+
+                                <input type="hidden" value="@playerModel.TeamId" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">
+                                    <i class="bi bi-calendar-event me-1"></i> Edad
+                                </label>
+                                <InputNumber class="form-control" @bind-Value="playerModel.Age" />
+                                <ValidationMessage For="@(() => playerModel.Age)" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">
+                                    <i class="bi bi-calendar-event me-1"></i> Goles Anotados
+                                </label>
+                                <InputNumber class="form-control" @bind-Value="playerModel.GoalsScored" />
+                                <ValidationMessage For="@(() => playerModel.GoalsScored)" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">
+                                    <i class="bi bi-geo-alt-fill me-1"></i> País de Origen
+                                </label>
+                                <InputText class="form-control" @bind-Value="playerModel.Nationality" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">
+                                    <i class="bi bi-trophy-fill me-1"></i> Categoría
+                                </label>
+                                <InputSelect class="form-select" @bind-Value="playerModel.Position">
+                                    <option value="0">Arquero</option>
+                                    <option value="1">Defensa</option>
+                                    <option value="2">Medio</option>
+                                    <option value="3">Delantero</option>
+                                </InputSelect>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold text-secondary small text-uppercase">
+                                    <i class="bi bi-heart-pulse-fill me-1"></i> Estado Físico
+                                </label>
+
+                                <div class="d-flex align-items-center p-2 border rounded bg-light shadow-sm">
+                                    <div
+                                        class="form-check form-switch w-100 d-flex justify-content-between align-items-center ps-0 pe-2">
+                                        <label
+                                            class="form-check-label fw-bold small ms-2 @(playerModel.IsInjured ? "text-danger" : "text-success")"
+                                            for="switchInjured">
+                                            @if (playerModel.IsInjured)
+                                            {
+                                                <span><i class="bi bi-bandaid-fill me-1"></i> Lesionado / Baja</span>
+                                            }
+                                            else
+                                            {
+                                                <span><i class="bi bi-check-circle-fill me-1"></i> Disponible / Sano</span>
+                                            }
+                                        </label>
+
+                                        <InputCheckbox @bind-Value="playerModel.IsInjured" class="form-check-input ms-3"
+                                            type="checkbox" role="switch" id="switchInjured"
+                                            style="width: 3em; height: 1.5em; cursor: pointer;" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex justify-content-end gap-2 border-top pt-3">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseModal">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="bi bi-save me-2"></i> Guardar Datos
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+@code {
+    [Parameter] public bool isVisible { get; set; }
+    [Parameter] public Player? playerToEdit { get; set; }
+    [Parameter] public EventCallback onClose { get; set; }
+    [Parameter] public EventCallback<Player> onSave { get; set; }
+    [Parameter] public List<Team>? TeamsList { get; set; }
+
+    private Player playerModel = new Player();
+    private bool IsEditMode => playerToEdit != null;
+
+    protected override void OnParametersSet()
+    {
+        if (isVisible)
+        {
+            if (playerToEdit != null)
+            {
+                playerModel = new Player
+                {
+                    Id = playerToEdit.Id,
+                    DocumentNumber = playerToEdit.DocumentNumber,
+                    Name = playerToEdit.Name,
+                    Team = TeamsList?.FirstOrDefault(t => t.Id == playerToEdit.TeamId),
+                    TeamId = playerToEdit.TeamId,
+                    Age = playerToEdit.Age,
+                    GoalsScored = playerToEdit.GoalsScored,
+                    Nationality = playerToEdit.Nationality,
+                    Position = playerToEdit.Position,
+                    IsInjured = playerToEdit.IsInjured,
+                };
+            }
+            else
+            {
+                playerModel = new Player { IsInjured = false };
+            }
+        }
+    }
+
+    private async Task CloseModal()
+    {
+        await onClose.InvokeAsync();
+    }
+
+    private async Task SaveChanges()
+    {
+        await onSave.InvokeAsync(playerModel);
+    }
+}

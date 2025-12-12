@@ -53,6 +53,12 @@ namespace WebAPI.Infrastructure.Repositories
             return entity;
         }
 
+        public Task<IEnumerable<T>> FindAsync(Func<T, bool> predicate)
+        {
+            IEnumerable<T> result = EntitySet.AsEnumerable().Where(predicate);
+            return Task.FromResult(result);
+        }
+
         public void Dispose()
         {
             Dispose(true);

@@ -1,0 +1,87 @@
+@using WebApp.Models
+
+<div class="card shadow-sm border-0 h-100 d-flex flex-column">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-primary fw-bold">
+            <i class="bi bi-person-lines-fill me-2"></i>Plantilla
+        </h5>
+        @if (!string.IsNullOrEmpty(TeamName))
+        {
+            <span class="badge bg-light text-primary border">@TeamName</span>
+        }
+    </div>
+
+    @if (PlayersList == null)
+    {
+        <div class="alert alert-secondary text-center">
+            <i class="bi bi-info-circle"></i>
+            <h4>Esperando selección...</h4>
+            <p>Por favor selecciona un equipo en el menú lateral para ver su información</p>
+        </div>
+    }
+    else
+    {
+        <div class="card-body p-0 d-flex flex-column overflow-hidden flex-grow-1">
+
+            @if (!PlayersList.Any())
+            {
+                <div class="p-5 text-center text-muted">
+                    <small>No hay jugadores registrados.</small>
+                </div>
+            }
+            else
+            {
+                <div class="list-group list-group-flush" style="height: 30vh; overflow-y: auto;">
+
+                    @foreach (var player in PlayersList)
+                    {
+                        <button type="button" class="list-group-item list-group-item-action px-4 py-3"
+                            @onclick="() => OnPlayerSelected(player.Id)">
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dark">@player.Name</span>
+
+                                <span class="badge bg-light text-secondary border">
+                                    @GetPosition(player.Position)
+                                </span>
+                            </div>
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <button class="btn btn-outline-primary w-100 py-2" type="button" @onclick="HandleCreateClick">
+                <i class="bi bi-plus-lg me-2"></i> Registrar Nuevo Jugador
+            </button>
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter] public List<Player>? PlayersList { get; set; }
+    [Parameter] public string TeamName { get; set; } = "";
+    [Parameter] public EventCallback<int> SelectedIdPlayer { get; set; }
+    [Parameter] public EventCallback OnAddPlayerRequest { get; set; }
+
+    private async Task HandleCreateClick()
+    {
+        await OnAddPlayerRequest.InvokeAsync();
+    }
+
+    private async Task OnPlayerSelected(int playerId)
+    {
+        await SelectedIdPlayer.InvokeAsync(playerId);
+    }
+
+    private string GetPosition(int pos) => pos switch
+    {
+        0 => "Arquero",
+        1 => "Defensa",
+        2 => "Medio",
+        3 => "Delantero",
+        _ => "General"
+    };
+}

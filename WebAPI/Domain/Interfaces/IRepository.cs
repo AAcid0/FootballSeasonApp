@@ -7,5 +7,6 @@ namespace WebAPI.Domain.Interfaces
         Task<T> AddAsync(T entity);
         Task UpdateAsync(T entity);
         Task<T> DeleteAsync(int id);
+        Task<IEnumerable<T>> FindAsync(Func<T, bool> predicate);
     }
 }

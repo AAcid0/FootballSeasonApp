@@ -1,7 +1,7 @@
 @using WebApp.Models
 @using System.ComponentModel.DataAnnotations
 
-@if (IsVisible)
+@if (isVisible)
 {
     <div class="modal-backdrop fade show"></div>
 
@@ -14,11 +14,11 @@
                         <i class="bi @(IsEditMode ? "bi-pencil-square" : "bi-plus-circle") me-2"></i>
                         @(IsEditMode ? "Editar Equipo" : "Registrar Nuevo Equipo")
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModal"></button>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
                 </div>
 
                 <div class="modal-body p-4">
-                    <EditForm Model="modeloTrabajo" OnValidSubmit="GuardarCambios">
+                    <EditForm Model="teamModel" OnValidSubmit="SaveChanges">
                         <DataAnnotationsValidator />
                         
                         <ValidationSummary class="alert alert-danger mb-3" />
@@ -29,39 +29,39 @@
                                 <label class="form-label fw-bold text-secondary small text-uppercase">
                                     <i class="bi bi-upc-scan me-1"></i> Código (3 Letras)
                                 </label>
-                                <InputText class="form-control" @bind-Value="modeloTrabajo.TeamCode" maxlength="3" 
+                                <InputText class="form-control" @bind-Value="teamModel.TeamCode" maxlength="3" 
                                            style="text-transform:uppercase" placeholder="Ej: BAR" />
-                                <ValidationMessage For="@(() => modeloTrabajo.TeamCode)" />
+                                <ValidationMessage For="@(() => teamModel.TeamCode)" />
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-secondary small text-uppercase">
                                     <i class="bi bi-tag-fill me-1"></i> Nombre del Equipo
                                 </label>
-                                <InputText class="form-control" @bind-Value="modeloTrabajo.Name" placeholder="Ej: Barcelona SC" />
-                                <ValidationMessage For="@(() => modeloTrabajo.Name)" />
+                                <InputText class="form-control" @bind-Value="teamModel.Name" placeholder="Ej: Barcelona SC" />
+                                <ValidationMessage For="@(() => teamModel.Name)" />
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-secondary small text-uppercase">
                                     <i class="bi bi-geo-alt-fill me-1"></i> País de Origen
                                 </label>
-                                <InputText class="form-control" @bind-Value="modeloTrabajo.Country" />
+                                <InputText class="form-control" @bind-Value="teamModel.Country" />
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-secondary small text-uppercase">
                                     <i class="bi bi-calendar-event me-1"></i> Año Fundación
                                 </label>
-                                <InputNumber class="form-control" @bind-Value="modeloTrabajo.FoundationDate" />
-                                <ValidationMessage For="@(() => modeloTrabajo.FoundationDate)" />
+                                <InputNumber class="form-control" @bind-Value="teamModel.FoundationDate" />
+                                <ValidationMessage For="@(() => teamModel.FoundationDate)" />
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold text-secondary small text-uppercase">
                                     <i class="bi bi-trophy-fill me-1"></i> Categoría
                                 </label>
-                                <InputSelect class="form-select" @bind-Value="modeloTrabajo.Category">
+                                <InputSelect class="form-select" @bind-Value="teamModel.Category">
                                     <option value="0">Categoría A (Profesional)</option>
                                     <option value="1">Categoría B (Ascenso)</option>
                                     <option value="2">Categoría C (Amateur)</option>
@@ -74,15 +74,15 @@
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <InputNumber class="form-control" @bind-Value="modeloTrabajo.Budget" />
+                                    <InputNumber class="form-control" @bind-Value="teamModel.Budget" />
                                 </div>
-                                <ValidationMessage For="@(() => modeloTrabajo.Budget)" />
+                                <ValidationMessage For="@(() => teamModel.Budget)" />
                             </div>
 
                         </div>
 
                         <div class="mt-4 d-flex justify-content-end gap-2 border-top pt-3">
-                            <button type="button" class="btn btn-secondary" @onclick="CerrarModal">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseModal">
                                 Cancelar
                             </button>
                             <button type="submit" class="btn btn-success px-4">
@@ -98,52 +98,47 @@
 }
 
 @code {
-    [Parameter] public bool IsVisible { get; set; }
-    [Parameter] public Team? TeamToEdit { get; set; } // Si llega null, es Crear.
-    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public bool isVisible { get; set; }
+    [Parameter] public Team? teamToEdit { get; set; }
+    [Parameter] public EventCallback onClose { get; set; }
     [Parameter] public EventCallback<Team> OnSave { get; set; }
 
-    private Team modeloTrabajo = new();
-    private bool IsEditMode => TeamToEdit != null && TeamToEdit.Id > 0;
+    private Team teamModel = new();
+    private bool IsEditMode => teamToEdit != null && teamToEdit.Id > 0;
 
-    // Se ejecuta cada vez que el padre cambia los parámetros (abre el modal)
     protected override void OnParametersSet()
     {
-        if (IsVisible)
+        if (isVisible)
         {
-            if (TeamToEdit != null)
+            if (teamToEdit != null)
             {
-                // CLONAR EL OBJETO: Importante para no editar el original de la lista
-                // si el usuario da cancelar.
-                modeloTrabajo = new Team
+                teamModel = new Team
                 {
-                    Id = TeamToEdit.Id,
-                    TeamCode = TeamToEdit.TeamCode,
-                    Name = TeamToEdit.Name,
-                    Country = TeamToEdit.Country,
-                    Category = TeamToEdit.Category,
-                    FoundationDate = TeamToEdit.FoundationDate,
-                    Budget = TeamToEdit.Budget
+                    Id = teamToEdit.Id,
+                    TeamCode = teamToEdit.TeamCode,
+                    Name = teamToEdit.Name,
+                    Country = teamToEdit.Country,
+                    Category = teamToEdit.Category,
+                    FoundationDate = teamToEdit.FoundationDate,
+                    Budget = teamToEdit.Budget
                 };
             }
             else
             {
-                // Limpiar para crear uno nuevo
-                modeloTrabajo = new Team { FoundationDate = 2025 }; // Valor default sugerido
+                teamModel = new Team { FoundationDate = 2025 };
             }
         }
     }
 
-    private async Task CerrarModal()
+    private async Task CloseModal()
     {
-        await OnClose.InvokeAsync();
+        await onClose.InvokeAsync();
     }
 
-    private async Task GuardarCambios()
+    private async Task SaveChanges()
     {
-        // Regla de Negocio Frontend: Convertir Código a Mayúsculas
-        modeloTrabajo.TeamCode = modeloTrabajo.TeamCode?.ToUpper() ?? "";
+        teamModel.TeamCode = teamModel.TeamCode?.ToUpper() ?? "";
         
-        await OnSave.InvokeAsync(modeloTrabajo);
+        await OnSave.InvokeAsync(teamModel);
     }
 }
